@@ -1,0 +1,91 @@
+#+TITLE: Analytics for github issues 
+#+AUTHOR: VLEAD
+#+DATE: [2015-10-27 Tue]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ./org-templates/level-0.org
+#+options: ^:nil
+
+* Introduction
+
+* Requirements
+  1. Across all repositories in an organization on github :
+     1. Defects according to the status (Open, Close, Reopen) are obtained.
+     2. Defects per Severity are obtained. 
+     3. Defects per Institute are obtained. 
+     4. Total number of defects are obtained. 
+  2. Retrieval of data defined in requirement 1 using command line.
+  3. Retrieval of data defined in requirement 1 using REST APIs. 
+  4. A user interface for retrieval of the data defined in requirement 1.
+
+* Design & Implementation
+** Configuration of the application
+#+BEGIN_SRC python :tangle src/config.py :eval no :noweb yes
+# Creation of a token is documented at
+# https://help.github.com/articles/creating-an-access-token-for-command-line-use/
+auth1 = ('<user-id>', '<token>')
+# Example, note: the values are not exact.
+# auth = ('travulb', 'd3e0f00a317b5e3751bbf5e1787949e37145487f')
+
+organization = '<org-name>'
+# Example:
+# organization = 'Virtual-Labs'
+repos_url = '%s%s%s' % ('https://api.github.com/orgs/', organization, '/repos')
+
+#+END_SRC
+** Get all the repositories
+   An organization on github can hold a bunch of repositories.  Github provides
+   api to retrieve all the repositories in a given [[https://developer.github.com/v3/repos/#list-organization-repositories][organization]].
+#+BEGIN_SRC python :tangle src/read_repos.py :eval no :noweb yes
+<<imports>>
+<<get_response>>
+<<get_repos>>
+#+END_SRC
+
+** Imports
+:PROPERTIES:
+:noweb-ref: imports
+:END:      
+#+BEGIN_SRC python
+import requests
+import config
+#+END_SRC
+
+** Get Response from GitHub
+   Does a resource get.
+:PROPERTIES:
+:noweb-ref: get_response 
+:END:
+#+BEGIN_SRC python
+def get_response(url):
+    return requests.get(url, auth=config.auth)
+#+END_SRC
+
+** Get Repositories
+   Collates all the repositories running into pages. 
+:PROPERTIES:
+:noweb-ref: get_repos
+:END:
+#+BEGIN_SRC python
+def get_repos(response):
+    if 'last' not in response.links.keys():
+        return response.json()
+    else:
+        url = response.links['next']['url']
+        return response.json() + get_repos(get_response(url))
+#+END_SRC
+
+* Test Cases
+
+* Provisioning
+
+* Releases
+** Release - v1.1.0
+   This release will satisfy requirements 2.
+   Release Date :: [2015-11-19 Thu]
+** Release - v1.2.0
+   This release will satisfy requirements 3.
+   Release Date :: Not defined.
+** Release - v1.3.0
+   This release will satisfy requirements 4.
+   Release Date :: Not defined.
